@@ -40,7 +40,7 @@ A web-based person detection application using YOLO11n for **frame-by-frame dete
 
 1. **Navigate to project folder:**
 ```bash
-cd "C:\Users\Asustuf\Desktop\Original\yolov11n"
+cd "C:\Users\Asustuf\Desktop\persondetectv2"
 ```
 
 2. **Install dependencies:**
@@ -51,7 +51,18 @@ pip install -r requirements.txt
 ### Running the Application
 
 ```bash
-python app.py
+python app2.py
+```
+
+In a seperate terminal
+**Navigate to frontend folder**
+```bash
+cd frontend
+```
+
+***Running npm***
+```bash
+npm run dev
 ```
 
 Then open your browser to:
