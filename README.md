@@ -40,7 +40,7 @@ A web-based person detection application using YOLO11n for **frame-by-frame dete
 
 1. **Navigate to project folder:**
 ```bash
-cd "C:\Users\Suggala Sai Preetham\Desktop\Original\yolov11n"
+cd "C:\Users\Asustuf\Desktop\Original\yolov11n"
 ```
 
 2. **Install dependencies:**
