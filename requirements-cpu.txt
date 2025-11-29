@@ -1,0 +1,24 @@
+# Core dependencies
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+aiofiles==24.1.0
+
+# Computer Vision & ML
+opencv-python==4.11.0.86
+numpy>=1.24.0
+ultralytics==8.3.63
+
+# PyTorch CPU-only
+# Install with: pip install -r requirements-cpu.txt --extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.6.0
+torchvision==0.21.0
+torchaudio==2.6.0
+
+# Utilities
+Pillow>=10.0.0
+pyyaml>=6.0
+requests>=2.31.0
+matplotlib>=3.3.0
+lapx>=0.5.5
+

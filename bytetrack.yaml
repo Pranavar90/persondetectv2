@@ -1,0 +1,12 @@
+# Ultralytics YOLO ByteTrack Configuration
+# Optimized for maximum detection sensitivity while maintaining tracking
+
+tracker_type: bytetrack
+
+# Core Tracking Thresholds - OPTIMIZED FOR HIGH SENSITIVITY
+track_high_thresh: 0.35  # Lower to keep weak detections (was 0.5)
+track_low_thresh: 0.15   # Allow recovery of weak detections (was 0.1)
+new_track_thresh: 0.4    # Match detection confidence threshold (was 0.6)
+track_buffer: 60         # Keep tracks for 2 seconds during occlusion (was 30)
+match_thresh: 0.8        # IoU matching threshold
+fuse_score: True         # Fuse detection score with IoU for better matching

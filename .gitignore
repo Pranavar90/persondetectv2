@@ -1,0 +1,86 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environment
+venv/
+env/
+ENV/
+hot/
+
+# Node modules
+node_modules/
+
+# Model files (large files)
+*.pt
+*.pth
+*.weights
+*.onnx
+
+# Video and media files
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+*.flv
+*.wmv
+*.m4v
+*.mpg
+*.mpeg
+
+# Image files
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+*.tif
+*.svg
+*.ico
+*.webp
+*.heic
+*.heif
+
+# Output directories
+outputs/
+comparison_outputs/
+uploads/
+data/
+static/
+static/videos/
+static/*.mp4
+static/*.avi
+
+# Windows reserved files
+nul
+CON
+PRN
+AUX
+NUL
+COM1
+COM2
+LPT1
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+*.backup

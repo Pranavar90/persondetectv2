@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Person Detection - Zone & Line Counting (Detection Only)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f7fa;
+            color: #1a1a1a;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .navbar-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+        }
+
+        .navbar-brand {
+            font-size: 20px;
+            font-weight: 700;
+            color: #2563eb;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .navbar-menu {
+            display: flex;
+            gap: 8px;
+            list-style: none;
+        }
+
+        .navbar-link {
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #4b5563;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .navbar-link:hover {
+            background: #f3f4f6;
+            color: #2563eb;
+        }
+
+        .navbar-link.active {
+            background: #2563eb;
+            color: white;
+        }
+
+        /* Main Wrapper */
+        .main-wrapper {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        /* Page Header */
+        .page-header {
+            margin-bottom: 32px;
+        }
+
+        .page-header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+
+        .page-header p {
+            color: #6b7280;
+            font-size: 16px;
+        }
+
+        /* Main Content Grid */
+        .main-content {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 24px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .card-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-body {
+            padding: 24px;
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+            margin: 8px 0;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #1d4ed8;
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+            margin: 8px 0;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #059669;
+            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #374151;
+            border: 1px solid #e5e7eb;
+            margin: 8px 0;
+        }
+
+        .btn-secondary:hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+        }
+
+        /* File Upload */
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-upload-label {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            border: 2px dashed #2563eb;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            color: #2563eb;
+            font-weight: 600;
+            transition: all 0.2s;
+            background: #f0f7ff;
+        }
+
+        .file-upload-label:hover {
+            background: #dbeafe;
+            border-color: #1d4ed8;
+        }
+
+        /* Upload Progress */
+        .upload-progress {
+            display: none;
+            margin: 15px 0;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 28px;
+            background: #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            margin: 10px 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: #2563eb;
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .upload-status {
+            text-align: center;
+            color: #2563eb;
+            font-weight: 600;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: #f0f7ff;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 3px solid #2563eb;
+            display: none;
+        }
+
+        .info-box h4 {
+            color: #1e40af;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .info-box p {
+            color: #1e40af;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        /* Info Tooltip */
+        .info-icon {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            background: #2563eb;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 18px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: help;
+            margin-left: 8px;
+            position: relative;
+        }
+
+        .info-icon:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 25px;
+            top: -8px;
+            background: #1f2937;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 400;
+            white-space: nowrap;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .info-icon:hover::before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 6px;
+            width: 0;
+            height: 0;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+            border-right: 5px solid #1f2937;
+            z-index: 1001;
+        }
+
+        .card-header-with-info {
+            display: flex;
+            align-items: center;
+        }
+
+        /* Form Elements */
+        input[type="text"], select {
+            width: 100%;
+            padding: 10px 12px;
+            margin: 8px 0;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        label {
+            display: block;
+            margin: 12px 0 6px 0;
+            font-weight: 600;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        /* Canvas Area */
+        .canvas-area {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 600px;
+        }
+
+        #canvas {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: crosshair;
+            max-width: 100%;
+            display: block;
+        }
+
+        /* Zone & Line Lists */
+        .zone-list, .line-list {
+            max-height: 250px;
+            overflow-y: auto;
+            margin-top: 12px;
+        }
+
+        .zone-item, .line-item {
+            padding: 12px;
+            margin: 8px 0;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .zone-item:hover, .line-item:hover {
+            background: #f3f4f6;
+        }
+
+        .color-preview {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 10px;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .delete-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .delete-btn:hover {
+            background: #dc2626;
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+        }
+
+        /* Loading */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 24px;
+            background: #f0f7ff;
+            border-radius: 8px;
+            border: 1px solid #dbeafe;
+        }
+
+        .spinner {
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid #2563eb;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading p {
+            color: #1e40af;
+            font-weight: 600;
+            margin: 8px 0;
+        }
+
+        .loading .note {
+            color: #6b7280;
+            font-size: 12px;
+            font-weight: 400;
+            margin-top: 12px;
+        }
+
+        /* Status Messages */
+        .status {
+            padding: 12px 16px;
+            margin: 12px 0;
+            border-radius: 8px;
+            display: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                order: 2;
+            }
+
+            .canvas-area {
+                order: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar-content {
+                flex-direction: column;
+                height: auto;
+                padding: 16px 24px;
+                gap: 16px;
+            }
+
+            .main-wrapper {
+                padding: 20px 16px;
+            }
+
+            .page-header h1 {
+                font-size: 24px;
+            }
+
+            .card-body {
+                padding: 16px;
+            }
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-muted {
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <a href="/" class="navbar-brand">
+                <span> Person Tracker
+            </a>
+            <ul class="navbar-menu">
+                <li>
+                    <a href="/" class="navbar-link active">📤 Video Upload</a>
+                </li>
+                <li>
+                    <a href="/history" class="navbar-link">📊 History</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="main-wrapper">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>Person Detection</h1>
+            <p>Detection-Only Zone & Line Counting with YOLO11n (No Tracking)</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Upload Video Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>📤 Upload Video</h3>
+                    </div>
+                    <div class="card-body">
+                        <label for="videoFile" class="file-upload-label">
+                            Choose Video File
+                        </label>
+                        <input type="file" id="videoFile" accept="video/*">
+
+                        <!-- Upload Progress -->
+                        <div class="upload-progress" id="uploadProgress">
+                            <div class="upload-status" id="uploadStatus">Uploading...</div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar" id="progressBar">0%</div>
+                            </div>
+                        </div>
+
+                        <div id="videoInfo" class="info-box">
+                            <h4>Video Info</h4>
+                            <p id="videoDetails"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Zones Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-header-with-info">
+                            <h3>🔷 Zones</h3>
+                            <span class="info-icon" data-tooltip="Click video to add points (min 3) • Right-click to finish">i</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <label for="zoneType">Zone Type:</label>
+                        <select id="zoneType">
+                            <option value="staff">Staff Zone</option>
+                            <option value="customer">Customer Zone</option>
+                        </select>
+                        <input type="text" id="zoneName" placeholder="Zone name (e.g., Staff Zone)">
+                        <button class="btn btn-primary" id="addZone">Start Drawing Zone</button>
+                        <button class="btn btn-success" id="finishZone" style="display:none;">Finish Polygon</button>
+                        <div class="zone-list" id="zoneList"></div>
+                    </div>
+                </div>
+
+                <!-- Counting Lines Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-header-with-info">
+                            <h3>📏 Counting Lines</h3>
+                            <span class="info-icon" data-tooltip="Click 'Add Line' • Click start point • Click end point">i</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <input type="text" id="lineName" placeholder="Line name">
+                        <button class="btn btn-primary" id="addLine">Add Counting Line</button>
+                        <div class="line-list" id="lineList"></div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons Card -->
+                <div class="card">
+                    <div class="card-body">
+                        <button class="btn btn-success" id="processBtn" disabled>🚀 Process Video</button>
+                        <button class="btn btn-secondary" id="clearAll">🗑️ Clear All</button>
+
+                        <div class="loading" id="loading">
+                            <div class="spinner"></div>
+                            <p id="processingStatus">Processing video with ByteTrack... This may take a few minutes</p>
+                        </div>
+
+                        <div class="status" id="status"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Canvas Area -->
+            <div class="canvas-area">
+                <canvas id="canvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        let videoFile = null;
+        let currentImage = null;
+        let zones = [];
+        let lines = [];
+        let currentZone = null;
+        let currentLine = null;
+        let drawingMode = null; // 'zone' or 'line'
+
+        const colors = [
+            [255, 0, 0],     // Red
+            [0, 255, 0],     // Green
+            [0, 0, 255],     // Blue
+            [255, 255, 0],   // Yellow
+            [255, 0, 255],   // Magenta
+            [0, 255, 255],   // Cyan
+        ];
+        let colorIndex = 0;
+
+        // File upload with progress
+        document.getElementById('videoFile').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('video', file);
+
+            // Show progress bar
+            const progressContainer = document.getElementById('uploadProgress');
+            const progressBar = document.getElementById('progressBar');
+            const uploadStatus = document.getElementById('uploadStatus');
+
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            progressBar.textContent = '0%';
+            uploadStatus.textContent = 'Uploading video...';
+
+            // Use XMLHttpRequest for upload progress
+            const xhr = new XMLHttpRequest();
+
+            // Upload progress
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const percentComplete = Math.round((e.loaded / e.total) * 100);
+                    progressBar.style.width = percentComplete + '%';
+                    progressBar.textContent = percentComplete + '%';
+                    uploadStatus.textContent = `Uploading... ${percentComplete}%`;
+                }
+            });
+
+            // Upload complete
+            xhr.addEventListener('load', () => {
+                if (xhr.status === 200) {
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+
+                        if (data.success) {
+                            progressBar.style.width = '100%';
+                            progressBar.textContent = '100%';
+                            uploadStatus.textContent = 'Upload complete! Processing preview...';
+
+                            videoFile = data.filename;
+
+                            // Load preview image
+                            const img = new Image();
+                            img.onload = () => {
+                                currentImage = img;
+                                canvas.width = img.width;
+                                canvas.height = img.height;
+                                redraw();
+                                document.getElementById('processBtn').disabled = false;
+
+                                // Hide progress, show video info
+                                setTimeout(() => {
+                                    progressContainer.style.display = 'none';
+                                }, 1000);
+                            };
+                            img.src = data.preview + '?' + Date.now();
+
+                            document.getElementById('videoInfo').style.display = 'block';
+                            document.getElementById('videoDetails').innerHTML = `
+                                <strong>Resolution:</strong> ${data.width}x${data.height}<br>
+                                <strong>FPS:</strong> ${data.fps}<br>
+                                <strong>Frames:</strong> ${data.frames}
+                            `;
+
+                            showStatus('Video uploaded successfully!', 'success');
+                        } else {
+                            progressContainer.style.display = 'none';
+                            showStatus('Upload failed: ' + data.error, 'error');
+                        }
+                    } catch (error) {
+                        progressContainer.style.display = 'none';
+                        showStatus('Upload error: ' + error, 'error');
+                    }
+                } else {
+                    progressContainer.style.display = 'none';
+                    showStatus('Upload failed with status: ' + xhr.status, 'error');
+                }
+            });
+
+            // Upload error
+            xhr.addEventListener('error', () => {
+                progressContainer.style.display = 'none';
+                showStatus('Upload error: Network failure', 'error');
+            });
+
+            // Send request
+            xhr.open('POST', '/upload');
+            xhr.send(formData);
+        });
+
+        // Add zone button
+        document.getElementById('addZone').addEventListener('click', () => {
+            const name = document.getElementById('zoneName').value || `Zone ${zones.length + 1}`;
+            const zoneType = document.getElementById('zoneType').value;
+            drawingMode = 'zone';
+            currentZone = {
+                name: name,
+                type: zoneType,
+                points: [],
+                color: colors[colorIndex % colors.length]
+            };
+            colorIndex++;
+            document.getElementById('addZone').style.display = 'none';
+            document.getElementById('finishZone').style.display = 'block';
+            showStatus(`Drawing ${zoneType} zone "${name}". Click to add points (need at least 3).`, 'success');
+        });
+
+        // Finish zone button
+        document.getElementById('finishZone').addEventListener('click', () => {
+            console.log('Finish button clicked');
+            console.log('Drawing mode:', drawingMode);
+            console.log('Current zone:', currentZone);
+            console.log('Points:', currentZone ? currentZone.points.length : 0);
+
+            if (drawingMode === 'zone' && currentZone && currentZone.points.length >= 3) {
+                zones.push(currentZone);
+                console.log('Zone added to list. Total zones:', zones.length);
+                updateZoneList();
+                currentZone = null;
+                drawingMode = null;
+                document.getElementById('addZone').style.display = 'block';
+                document.getElementById('finishZone').style.display = 'none';
+                document.getElementById('zoneName').value = '';
+                redraw();
+                showStatus('Zone added successfully!', 'success');
+            } else if (currentZone && currentZone.points.length < 3) {
+                showStatus('Need at least 3 points to create a zone!', 'error');
+            } else {
+                showStatus('Error: No zone being drawn. Click "Start Drawing Zone" first.', 'error');
+            }
+        });
+
+        // Add line button
+        document.getElementById('addLine').addEventListener('click', () => {
+            const name = document.getElementById('lineName').value || `Line ${lines.length + 1}`;
+            drawingMode = 'line';
+            currentLine = {
+                name: name,
+                start: null,
+                end: null,
+                color: colors[colorIndex % colors.length]
+            };
+            colorIndex++;
+            showStatus(`Drawing line "${name}". Click start and end points.`, 'success');
+        });
+
+        // Canvas click
+        canvas.addEventListener('click', (e) => {
+            if (!currentImage) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / rect.width;
+            const y = (e.clientY - rect.top) / rect.height;
+
+            if (drawingMode === 'zone' && currentZone) {
+                currentZone.points.push({x, y});
+                redraw();
+                showStatus(`Zone "${currentZone.name}": ${currentZone.points.length} points added. ${currentZone.points.length >= 3 ? 'Click "Finish Polygon" or right-click to complete.' : `Need ${3 - currentZone.points.length} more point(s).`}`, 'success');
+            } else if (drawingMode === 'line' && currentLine) {
+                if (!currentLine.start) {
+                    currentLine.start = {x, y};
+                    redraw();
+                } else if (!currentLine.end) {
+                    currentLine.end = {x, y};
+                    lines.push(currentLine);
+                    updateLineList();
+                    currentLine = null;
+                    drawingMode = null;
+                    redraw();
+                    showStatus('Line added!', 'success');
+                }
+            }
+        });
+
+        // Right click to finish zone
+        canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+
+            if (drawingMode === 'zone' && currentZone && currentZone.points.length >= 3) {
+                zones.push(currentZone);
+                updateZoneList();
+                currentZone = null;
+                drawingMode = null;
+                document.getElementById('addZone').style.display = 'block';
+                document.getElementById('finishZone').style.display = 'none';
+                document.getElementById('zoneName').value = '';
+                redraw();
+                showStatus('Zone added successfully!', 'success');
+            } else if (drawingMode === 'zone' && currentZone && currentZone.points.length < 3) {
+                showStatus('Need at least 3 points to create a zone!', 'error');
+            }
+        });
+
+        function redraw() {
+            if (!currentImage) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(currentImage, 0, 0);
+
+            // Draw completed zones
+            zones.forEach(zone => {
+                drawZone(zone);
+            });
+
+            // Draw current zone being drawn
+            if (currentZone && currentZone.points.length > 0) {
+                drawZone(currentZone, true);
+            }
+
+            // Draw completed lines
+            lines.forEach(line => {
+                drawLine(line);
+            });
+
+            // Draw current line being drawn
+            if (currentLine && currentLine.start) {
+                if (currentLine.end) {
+                    drawLine(currentLine);
+                } else {
+                    const [r, g, b] = currentLine.color;
+                    ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                    ctx.beginPath();
+                    ctx.arc(currentLine.start.x * canvas.width, currentLine.start.y * canvas.height, 5, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+            }
+        }
+
+        function drawZone(zone, isDrawing = false) {
+            if (zone.points.length === 0) return;
+
+            const [r, g, b] = zone.color;
+
+            // Draw polygon
+            ctx.beginPath();
+            ctx.moveTo(zone.points[0].x * canvas.width, zone.points[0].y * canvas.height);
+            for (let i = 1; i < zone.points.length; i++) {
+                ctx.lineTo(zone.points[i].x * canvas.width, zone.points[i].y * canvas.height);
+            }
+            if (!isDrawing) {
+                ctx.closePath();
+            }
+
+            // Fill
+            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.3)`;
+            ctx.fill();
+
+            // Stroke
+            ctx.strokeStyle = `rgb(${r}, ${g}, ${b})`;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Draw points
+            zone.points.forEach(point => {
+                ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                ctx.beginPath();
+                ctx.arc(point.x * canvas.width, point.y * canvas.height, 5, 0, 2 * Math.PI);
+                ctx.fill();
+            });
+
+            // Label
+            ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+            ctx.font = 'bold 16px Inter';
+            ctx.fillText(zone.name, zone.points[0].x * canvas.width, zone.points[0].y * canvas.height - 10);
+        }
+
+        function drawLine(line) {
+            if (!line.start || !line.end) return;
+
+            const [r, g, b] = line.color;
+
+            ctx.strokeStyle = `rgb(${r}, ${g}, ${b})`;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(line.start.x * canvas.width, line.start.y * canvas.height);
+            ctx.lineTo(line.end.x * canvas.width, line.end.y * canvas.height);
+            ctx.stroke();
+
+            // Draw endpoints
+            ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+            ctx.beginPath();
+            ctx.arc(line.start.x * canvas.width, line.start.y * canvas.height, 6, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(line.end.x * canvas.width, line.end.y * canvas.height, 6, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // Label
+            const midX = (line.start.x + line.end.x) / 2 * canvas.width;
+            const midY = (line.start.y + line.end.y) / 2 * canvas.height;
+            ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+            ctx.font = 'bold 16px Inter';
+            ctx.fillText(line.name, midX + 10, midY);
+        }
+
+        function updateZoneList() {
+            const list = document.getElementById('zoneList');
+            list.innerHTML = '';
+            zones.forEach((zone, index) => {
+                const [r, g, b] = zone.color;
+                const zoneTypeLabel = zone.type === 'staff' ? '👔 Staff' : '👥 Customer';
+                const div = document.createElement('div');
+                div.className = 'zone-item';
+                div.innerHTML = `
+                    <span>
+                        <span class="color-preview" style="background: rgb(${r}, ${g}, ${b})"></span>
+                        ${zone.name} (${zoneTypeLabel}, ${zone.points.length} points)
+                    </span>
+                    <button class="delete-btn" onclick="deleteZone(${index})">Delete</button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function updateLineList() {
+            const list = document.getElementById('lineList');
+            list.innerHTML = '';
+            lines.forEach((line, index) => {
+                const [r, g, b] = line.color;
+                const div = document.createElement('div');
+                div.className = 'line-item';
+                div.innerHTML = `
+                    <span>
+                        <span class="color-preview" style="background: rgb(${r}, ${g}, ${b})"></span>
+                        ${line.name}
+                    </span>
+                    <button class="delete-btn" onclick="deleteLine(${index})">Delete</button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        window.deleteZone = (index) => {
+            zones.splice(index, 1);
+            updateZoneList();
+            redraw();
+        };
+
+        window.deleteLine = (index) => {
+            lines.splice(index, 1);
+            updateLineList();
+            redraw();
+        };
+
+        document.getElementById('clearAll').addEventListener('click', () => {
+            zones = [];
+            lines = [];
+            currentZone = null;
+            currentLine = null;
+            drawingMode = null;
+            document.getElementById('addZone').style.display = 'block';
+            document.getElementById('finishZone').style.display = 'none';
+            document.getElementById('zoneName').value = '';
+            document.getElementById('lineName').value = '';
+            updateZoneList();
+            updateLineList();
+            redraw();
+            showStatus('All zones and lines cleared', 'success');
+        });
+
+        document.getElementById('processBtn').addEventListener('click', async () => {
+            if (!videoFile) {
+                showStatus('Please upload a video first', 'error');
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('processBtn').disabled = true;
+
+            try {
+                const response = await fetch('/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        filename: videoFile,
+                        zones: zones,
+                        lines: lines
+                    })
+                });
+
+                const data = await response.json();
+
+                document.getElementById('loading').style.display = 'none';
+
+                if (data.success) {
+                    showStatus('Processing complete! Redirecting to dashboard...', 'success');
+                    // Redirect to dashboard
+                    setTimeout(() => {
+                        window.location.href = '/dashboard/' + data.output;
+                    }, 1000);
+                } else {
+                    showStatus('Processing failed: ' + data.error, 'error');
+                    document.getElementById('processBtn').disabled = false;
+                }
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                showStatus('Processing error: ' + error, 'error');
+                document.getElementById('processBtn').disabled = false;
+            }
+        });
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = 'status ' + type;
+            status.style.display = 'block';
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

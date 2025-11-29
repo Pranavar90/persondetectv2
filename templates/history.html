@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video History - Person Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f7fa;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .navbar-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+        }
+
+        .navbar-brand {
+            font-size: 20px;
+            font-weight: 700;
+            color: #2563eb;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .navbar-menu {
+            display: flex;
+            gap: 8px;
+            list-style: none;
+        }
+
+        .navbar-item {
+            position: relative;
+        }
+
+        .navbar-link {
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #4b5563;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: block;
+        }
+
+        .navbar-link:hover {
+            background: #f3f4f6;
+            color: #2563eb;
+        }
+
+        .navbar-link.active {
+            background: #2563eb;
+            color: white;
+        }
+
+        /* Main Container */
+        .main-wrapper {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        /* Page Header */
+        .page-header {
+            margin-bottom: 32px;
+        }
+
+        .page-header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+
+        .page-header p {
+            color: #6b7280;
+            font-size: 16px;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .spinner {
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid #2563eb;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading p {
+            color: #6b7280;
+            font-size: 16px;
+        }
+
+        /* Filter Bar */
+        .filter-bar {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 24px;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .search-box::placeholder {
+            color: #9ca3af;
+        }
+
+        /* Video Grid */
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 24px;
+        }
+
+        .video-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .video-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transform: translateY(-2px);
+        }
+
+        .video-card-header {
+            background: #2563eb;
+            color: white;
+            padding: 20px;
+        }
+
+        .video-card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            word-break: break-word;
+        }
+
+        .video-card-date {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .video-card-body {
+            padding: 20px;
+        }
+
+        .video-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .video-stat:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .stat-value {
+            color: #2563eb;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .zone-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 4px;
+        }
+
+        .zone-badge {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .video-card-footer {
+            padding: 16px 20px;
+            background: #f9fafb;
+            display: flex;
+            gap: 10px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            text-decoration: none;
+            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        /* No Data State */
+        .no-data {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .no-data-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .no-data-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+
+        .no-data-subtext {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .no-data .btn-primary {
+            max-width: 200px;
+            margin: 0 auto;
+        }
+
+        /* Empty card data */
+        .video-card-body .no-data {
+            padding: 20px;
+            border: none;
+            background: #f9fafb;
+        }
+
+        .video-card-body .no-data p {
+            color: #6b7280;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .navbar-content {
+                flex-direction: column;
+                height: auto;
+                padding: 16px 24px;
+                gap: 16px;
+            }
+
+            .video-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .main-wrapper {
+                padding: 20px 16px;
+            }
+
+            .page-header h1 {
+                font-size: 24px;
+            }
+
+            .video-card-footer {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <a href="/" class="navbar-brand">
+                <span>📊</span> Person Analytics
+            </a>
+            <ul class="navbar-menu">
+                <li class="navbar-item">
+                    <a href="/" class="navbar-link">Upload</a>
+                </li>
+                <li class="navbar-item">
+                    <a href="/history" class="navbar-link active">History</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="main-wrapper">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>Video Processing History</h1>
+            <p>View all processed videos and analytics</p>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Loading video history...</p>
+        </div>
+
+        <!-- Content -->
+        <div id="content" style="display: none;">
+            <!-- Filter Bar -->
+            <div class="filter-bar">
+                <input type="text" id="searchBox" class="search-box" placeholder="Search videos...">
+            </div>
+
+            <!-- Video Grid -->
+            <div class="video-grid" id="videoGrid"></div>
+
+            <!-- No Data State -->
+            <div class="no-data" id="noData" style="display: none;">
+                <div class="no-data-icon">📁</div>
+                <div class="no-data-text">No processed videos found</div>
+                <div class="no-data-subtext">Upload and process a video to see it here</div>
+                <a href="/" class="btn btn-primary">Upload Video</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allVideos = [];
+
+        async function loadHistory() {
+            try {
+                const response = await fetch('/api/history');
+                const data = await response.json();
+                allVideos = data.videos;
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+
+                if (allVideos.length === 0) {
+                    document.getElementById('noData').style.display = 'block';
+                } else {
+                    renderVideos(allVideos);
+                }
+            } catch (error) {
+                console.error('Error loading history:', error);
+                document.getElementById('loading').innerHTML = `
+                    <h2 style="color: #dc3545;">Error Loading History</h2>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+
+        function formatDate(timestamp) {
+            const date = new Date(timestamp * 1000);
+            return date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function renderVideos(videos) {
+            const grid = document.getElementById('videoGrid');
+
+            if (videos.length === 0) {
+                grid.style.display = 'none';
+                document.getElementById('noData').style.display = 'block';
+                return;
+            }
+
+            grid.style.display = 'grid';
+            document.getElementById('noData').style.display = 'none';
+
+            grid.innerHTML = videos.map(video => {
+                if (!video.has_data) {
+                    return `
+                        <div class="video-card">
+                            <div class="video-card-header">
+                                <div class="video-card-title">${video.original_name}</div>
+                                <div class="video-card-date">${formatDate(video.processed_date)}</div>
+                            </div>
+                            <div class="video-card-body">
+                                <div class="no-data" style="padding: 20px;">
+                                    <p>No tracking data available</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="video-card" onclick="window.location.href='/dashboard/${video.filename}'">
+                        <div class="video-card-header">
+                            <div class="video-card-title">${video.original_name}</div>
+                            <div class="video-card-date">${formatDate(video.processed_date)}</div>
+                        </div>
+                        <div class="video-card-body">
+                            <div class="video-stat">
+                                <span class="stat-label">Duration</span>
+                                <span class="stat-value">${video.duration}</span>
+                            </div>
+                            <div class="video-stat">
+                                <span class="stat-label">Avg Detections</span>
+                                <span class="stat-value">${video.avg_detections} per frame</span>
+                            </div>
+                            <div class="video-stat">
+                                <span class="stat-label">Zones Tracked</span>
+                                <div class="zone-badges">
+                                    ${video.zones.map(zone => `<span class="zone-badge">${zone}</span>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="video-card-footer">
+                            <a href="/dashboard/${video.filename}" class="btn btn-primary" onclick="event.stopPropagation();">View Dashboard</a>
+                            <a href="/download/${video.filename}" class="btn btn-success" onclick="event.stopPropagation();">Download</a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Search functionality
+        document.getElementById('searchBox').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filtered = allVideos.filter(video =>
+                video.original_name.toLowerCase().includes(searchTerm)
+            );
+            renderVideos(filtered);
+        });
+
+        // Load history on page load
+        loadHistory();
+    </script>
+</body>
+</html>
