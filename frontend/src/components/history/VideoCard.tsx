@@ -59,13 +59,41 @@ export function VideoCard({ video, onDelete }: VideoCardProps) {
 
         {/* Video Thumbnail / Preview Area */}
         <div className="relative aspect-video bg-gray-900 overflow-hidden">
-          {/* Placeholder thumbnail - you could add actual thumbnails later */}
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
-            <div className="text-center">
-              <Play className="w-12 h-12 text-white/30 mx-auto mb-2" />
-              <span className="text-white/50 text-sm">Click to view analytics</span>
+          {video.video_url ? (
+            <>
+              {/* Video thumbnail */}
+              <video
+                src={`http://localhost:8002${video.video_url}`}
+                className="absolute inset-0 w-full h-full object-cover"
+                preload="metadata"
+                muted
+                playsInline
+                onError={(e) => {
+                  // Fallback to placeholder on error
+                  e.currentTarget.style.display = 'none';
+                  const placeholder = e.currentTarget.nextElementSibling;
+                  if (placeholder) {
+                    (placeholder as HTMLElement).style.display = 'flex';
+                  }
+                }}
+              />
+              {/* Fallback placeholder (hidden by default) */}
+              <div className="absolute inset-0 hidden items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
+                <div className="text-center">
+                  <Play className="w-12 h-12 text-white/30 mx-auto mb-2" />
+                  <span className="text-white/50 text-sm">Click to view analytics</span>
+                </div>
+              </div>
+            </>
+          ) : (
+            /* Placeholder for videos without URL */
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
+              <div className="text-center">
+                <Play className="w-12 h-12 text-white/30 mx-auto mb-2" />
+                <span className="text-white/50 text-sm">Click to view analytics</span>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Hover overlay */}
           <div className="absolute inset-0 bg-blue-600/0 group-hover:bg-blue-600/20 transition-all duration-300 flex items-center justify-center">

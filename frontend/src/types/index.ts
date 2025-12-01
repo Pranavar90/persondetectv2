@@ -123,6 +123,7 @@ export interface HistoryVideo {
   duration?: string;
   zones?: string[];
   has_data: boolean;
+  video_url?: string;
 }
 
 // Process request

@@ -1107,6 +1107,10 @@ async def get_history():
             if not json_path.exists():
                 json_path = DATA_FOLDER / f'temp_processed_{base_name}_tracking.json'
 
+            # Generate video URL for thumbnail display
+            file_hash = hashlib.md5(video_name.encode()).hexdigest()[:8]
+            video_url = f'/static/video_{file_hash}.mp4'
+            
             if json_path.exists():
                 try:
                     with open(json_path, 'r') as f:
@@ -1119,6 +1123,7 @@ async def get_history():
                         'total_persons': tracking_data['summary']['total_persons_detected'],
                         'duration': tracking_data['video_info']['duration'],
                         'zones': list(tracking_data['zones'].keys()),
+                        'video_url': video_url,
                         'has_data': True
                     })
                 except Exception as e:
@@ -1127,6 +1132,7 @@ async def get_history():
                         'filename': video_name,
                         'original_name': f'{base_name}.mp4',
                         'processed_date': video_file.stat().st_mtime,
+                        'video_url': video_url,
                         'has_data': False
                     })
             else:
@@ -1134,6 +1140,7 @@ async def get_history():
                     'filename': video_name,
                     'original_name': f'{base_name}.mp4',
                     'processed_date': video_file.stat().st_mtime,
+                    'video_url': video_url,
                     'has_data': False
                 })
 
